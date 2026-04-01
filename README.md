@@ -20,6 +20,8 @@
 - 🔧 **File Operations** — Read, write, edit files with syntax awareness
 - ⚡ **Lightweight** — Pure Python, no LangChain dependency
 - 🔄 **Context Management** — Auto-summarization & prompt caching
+- 🌊 **Token Streaming** — See responses token-by-token as Claude generates them (up to 13.5× faster first token)
+- 🧠 **Session Memory** — Per-repo persistent memory: Claude remembers past sessions automatically
 
 ---
 
