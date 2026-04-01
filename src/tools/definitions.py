@@ -2,6 +2,7 @@
 Tool schema definitions for Anthropic Claude API.
 Based on deepagents and Cursor tool specifications.
 """
+from __future__ import annotations
 
 from typing import Dict, List, Any
 

@@ -4,6 +4,7 @@ Summarization middleware for managing context length.
 Auto-summarizes conversation when context exceeds token limits.
 Based on deepagents SummarizationMiddleware pattern.
 """
+from __future__ import annotations
 
 import json
 from typing import Dict, List, Any, Optional

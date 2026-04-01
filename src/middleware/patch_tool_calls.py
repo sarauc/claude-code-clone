@@ -9,6 +9,7 @@ Handles fixing dangling or malformed tool calls that can occur from:
 
 Based on deepagents PatchToolCallsMiddleware pattern.
 """
+from __future__ import annotations
 
 import json
 import uuid

@@ -6,6 +6,7 @@ and other static content that doesn't change between requests.
 
 See: https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching
 """
+from __future__ import annotations
 
 from typing import Dict, List, Any, Optional
 from .base import BaseMiddleware, AgentState
