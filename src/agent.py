@@ -47,6 +47,12 @@ class AgentConfig:
     custom_system_prompt: Optional[str] = None
     enabled_tools: Optional[List[str]] = None
     
+    # Streaming
+    # When True, chat() yields {"type": "text_delta", "delta": str} events for
+    # each token as it arrives, so the CLI can render output in real time.
+    # When False, the full response is waited for before any output (original behaviour).
+    enable_streaming: bool = True
+
     # Debug
     debug: bool = False
 
@@ -121,47 +127,54 @@ class Agent:
         if self.config.debug:
             print(f"[DEBUG] {message}")
     
-    def _call_api(self) -> Dict[str, Any]:
+    def _build_request_params(self) -> Dict[str, Any]:
         """
-        Make an API call to Claude.
-        
-        Returns:
-            API response dictionary
+        Build the API request parameters dict from current state.
+
+        Extracted so that both the blocking (_call_api) and streaming
+        (_call_api_streaming) paths share identical request construction
+        without duplication.
         """
-        # Apply pre-processing middleware
-        self.state = self.middleware.pre_process(self.state)
-        
-        # Build request
-        request_params = {
+        params: Dict[str, Any] = {
             "model": self.config.model,
             "max_tokens": self.config.max_tokens,
+            # The full conversation history is re-sent on every call because
+            # the Anthropic API is stateless — there is no server-side memory.
             "messages": self.state.messages,
         }
-        
-        # Add system prompt (with caching if enabled)
+
+        # System prompt: use block format when prompt caching is on so that
+        # the cache_control marker is included; plain string otherwise.
         if self.config.enable_prompt_caching:
-            request_params["system"] = [{
+            params["system"] = [{
                 "type": "text",
                 "text": self.state.system_prompt,
                 "cache_control": {"type": "ephemeral"}
             }]
         else:
-            request_params["system"] = self.state.system_prompt
-        
-        # Add tools
+            params["system"] = self.state.system_prompt
+
+        # Tool definitions (JSON schemas); omitted entirely if none are active.
         if self.state.tools:
-            request_params["tools"] = self.state.tools
-        
-        self._log(f"API call with {len(self.state.messages)} messages")
-        
-        # Make API call
-        response = self.client.messages.create(**request_params)
-        
-        # Convert to dict for middleware processing
-        response_dict = {
+            params["tools"] = self.state.tools
+
+        return params
+
+    def _response_to_dict(self, response) -> Dict[str, Any]:
+        """
+        Convert an Anthropic SDK Message object to a plain dict.
+
+        The SDK returns typed objects (Message, ContentBlock, etc.). We
+        normalise them to dicts immediately so every downstream consumer
+        (middleware, chat loop, CLI) works with a single consistent format.
+        """
+        return {
             "id": response.id,
             "type": response.type,
             "role": response.role,
+            # model_dump() converts each ContentBlock dataclass → plain dict,
+            # giving us {"type": "text", "text": "..."} or
+            # {"type": "tool_use", "id": ..., "name": ..., "input": {...}}
             "content": [block.model_dump() for block in response.content],
             "model": response.model,
             "stop_reason": response.stop_reason,
@@ -171,11 +184,92 @@ class Agent:
                 "output_tokens": response.usage.output_tokens,
             }
         }
-        
-        # Apply post-processing middleware
+
+    def _call_api(self) -> Dict[str, Any]:
+        """
+        Blocking API call — waits for the complete response before returning.
+
+        Used when enable_streaming=False, and by the mock benchmark client
+        which does not support the streaming interface.
+
+        Returns:
+            Response as a plain dict (after post-process middleware).
+        """
+        # Pre-process middleware runs first: may mutate state (add cache
+        # headers, compress history, patch dangling tool calls, etc.)
+        self.state = self.middleware.pre_process(self.state)
+
+        request_params = self._build_request_params()
+        self._log(f"API call with {len(self.state.messages)} messages")
+
+        # Blocking call: returns only after the full response is generated.
+        response = self.client.messages.create(**request_params)
+
+        response_dict = self._response_to_dict(response)
+
+        # Post-process middleware runs after: updates token counts, etc.
         self.state, response_dict = self.middleware.post_process(self.state, response_dict)
-        
+
         return response_dict
+
+    def _call_api_streaming(self) -> Generator[Dict[str, Any], None, None]:
+        """
+        Streaming API call — yields tokens as they arrive, then the full response.
+
+        This is a generator that produces two kinds of events:
+
+            {"type": "text_delta", "delta": "<token>"}
+                Yielded once per text token as Claude streams them.
+                chat() forwards these straight to the CLI so the user sees
+                output immediately, rather than waiting for the full response.
+
+            {"type": "_api_response", "response": <dict>}
+                Yielded exactly once, after the stream closes. This is an
+                INTERNAL event — chat() intercepts it to extract the final
+                response dict (which includes tool_use blocks, stop_reason,
+                and usage). It is never forwarded to the CLI.
+
+        Why separate the two?
+            text_stream only delivers text token deltas. Tool use blocks and
+            metadata (stop_reason, usage) are only available via
+            stream.get_final_message() after the stream is exhausted.
+            We need both: deltas for real-time display, final message for
+            tool execution and middleware post-processing.
+        """
+        # Pre-process middleware must run BEFORE the stream opens so that
+        # state mutations (e.g. PatchToolCalls fixing dangling tool_use blocks)
+        # are reflected in the request we are about to send.
+        self.state = self.middleware.pre_process(self.state)
+
+        request_params = self._build_request_params()
+        self._log(f"Streaming API call with {len(self.state.messages)} messages")
+
+        # client.messages.stream() returns a context manager that keeps the
+        # HTTP connection open. Tokens arrive via stream.text_stream as the
+        # model generates them.
+        with self.client.messages.stream(**request_params) as stream:
+            for text_delta in stream.text_stream:
+                # Forward each token to the caller (chat() → CLI) immediately.
+                yield {"type": "text_delta", "delta": text_delta}
+
+            # Block here until the stream is fully consumed, then get the
+            # complete Message object — includes content blocks (text + any
+            # tool_use), stop_reason, and usage stats.
+            final = stream.get_final_message()
+
+        # Convert to the same dict format _call_api() returns so the rest of
+        # the chat() loop is identical regardless of which path was taken.
+        response_dict = self._response_to_dict(final)
+
+        # Post-process middleware: e.g. SummarizationMiddleware reads
+        # response.usage to update the cumulative token count used to decide
+        # when to compress conversation history.
+        self.state, response_dict = self.middleware.post_process(self.state, response_dict)
+
+        # Signal to chat() that the stream is done and hand over the full
+        # response. Using a typed internal event (rather than return) keeps
+        # this a generator and avoids StopIteration plumbing.
+        yield {"type": "_api_response", "response": response_dict}
     
     def _extract_tool_calls(self, content: List[Dict]) -> List[Dict[str, Any]]:
         """Extract tool calls from response content."""
@@ -257,9 +351,26 @@ class Agent:
             
             yield {"type": "turn_start", "turn": turn}
             
-            # Call API
+            # Call API — streaming or blocking depending on config.
+            #
+            # Streaming path: _call_api_streaming() is a generator. We iterate
+            # it here, forwarding text_delta events to the CLI and intercepting
+            # the final _api_response sentinel to capture the response dict.
+            #
+            # Blocking path: _call_api() returns the full response dict at once.
+            # No text_delta events are produced; the CLI waits for assistant_message.
             try:
-                response = self._call_api()
+                if self.config.enable_streaming:
+                    response = None
+                    for event in self._call_api_streaming():
+                        if event["type"] == "text_delta":
+                            # Pass token straight to the CLI for real-time display.
+                            yield event
+                        elif event["type"] == "_api_response":
+                            # Internal sentinel — capture and stop iterating.
+                            response = event["response"]
+                else:
+                    response = self._call_api()
             except Exception as e:
                 yield {"type": "error", "error": str(e)}
                 break

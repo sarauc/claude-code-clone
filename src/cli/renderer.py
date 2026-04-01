@@ -490,3 +490,40 @@ class CLIRenderer:
         self.total_input_tokens += input_tokens
         self.total_output_tokens += output_tokens
 
+    # ── Streaming helpers ────────────────────────────────────────────────────
+    # Three-phase API called by app.py when enable_streaming=True:
+    #   1. print_stream_start()  — called once before the first delta arrives
+    #   2. print_stream_delta()  — called per token during streaming
+    #   3. print_stream_end()    — called once after the stream closes
+
+    def print_stream_start(self):
+        """
+        Print the assistant prefix line before the first streaming token.
+
+        We cannot wrap streaming output in a Panel (panels require the full
+        text up front), so we print a plain prefix and let deltas follow
+        on the same line.
+        """
+        self.console.print()
+        self.console.print("🤖 ", end="", style="bold green")
+
+    def print_stream_delta(self, delta: str):
+        """
+        Print a single token inline with no trailing newline.
+
+        highlight=False prevents rich from applying syntax colouring to
+        partial tokens, which would produce garbled markup mid-stream.
+        markup=False prevents rich from misinterpreting [ ] in code as tags.
+        """
+        self.console.print(delta, end="", highlight=False, markup=False,
+                           style=STYLES["assistant"])
+
+    def print_stream_end(self):
+        """
+        Print a closing newline after the last token.
+
+        Without this the next line of output (tool calls, spinner, prompt)
+        would appear on the same line as the last streamed token.
+        """
+        self.console.print()  # move to next line
+

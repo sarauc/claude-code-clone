@@ -242,6 +242,7 @@ def make_mock_agent(responses: List[Dict], workspace: str) -> "Agent":
         workspace_path=workspace,
         enable_prompt_caching=False,   # keep mock simple
         enable_summarization=False,
+        enable_streaming=False,        # MockAnthropicClient has no stream() method
     )
     agent = Agent(config)
 

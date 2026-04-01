@@ -1,0 +1,614 @@
+{
+  "timestamp": "20260331_204738",
+  "scenarios": [
+    {
+      "name": "mock_simple_response",
+      "mode": "mock",
+      "description": "Single turn, text only, no tools \u2014 measures pipeline overhead",
+      "error": null,
+      "runs": [
+        {
+          "ttft_ms": 0.03274999999991479,
+          "total_ms": 0.03366599999998776,
+          "tool_exec_ms": 0,
+          "input_tokens": 120,
+          "output_tokens": 40,
+          "message_count": 2,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.02049999999997887,
+          "total_ms": 0.02154100000006931,
+          "tool_exec_ms": 0,
+          "input_tokens": 120,
+          "output_tokens": 40,
+          "message_count": 2,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.018249999999997435,
+          "total_ms": 0.019165999999959382,
+          "tool_exec_ms": 0,
+          "input_tokens": 120,
+          "output_tokens": 40,
+          "message_count": 2,
+          "cache_read_tokens": 0
+        }
+      ],
+      "summary": {
+        "ttft_ms_median": 0.02049999999997887,
+        "total_ms_median": 0.02154100000006931,
+        "tool_exec_ms_median": 0,
+        "input_tokens_median": 120,
+        "output_tokens_median": 40,
+        "n_runs": 3
+      }
+    },
+    {
+      "name": "mock_single_tool",
+      "mode": "mock",
+      "description": "One tool call (read_file) then final answer \u2014 measures single tool round-trip",
+      "error": null,
+      "runs": [
+        {
+          "ttft_ms": 0.021209000000022016,
+          "total_ms": 0.1284169999999918,
+          "tool_exec_ms": 0.08404100000003467,
+          "input_tokens": 240,
+          "output_tokens": 80,
+          "message_count": 4,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.019917000000035934,
+          "total_ms": 0.09683300000007389,
+          "tool_exec_ms": 0.055499999999986116,
+          "input_tokens": 240,
+          "output_tokens": 80,
+          "message_count": 4,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.019041000000052932,
+          "total_ms": 0.08812499999999446,
+          "tool_exec_ms": 0.0483749999999894,
+          "input_tokens": 240,
+          "output_tokens": 80,
+          "message_count": 4,
+          "cache_read_tokens": 0
+        }
+      ],
+      "summary": {
+        "ttft_ms_median": 0.019917000000035934,
+        "total_ms_median": 0.09683300000007389,
+        "tool_exec_ms_median": 0.055499999999986116,
+        "input_tokens_median": 240,
+        "output_tokens_median": 80,
+        "n_runs": 3
+      }
+    },
+    {
+      "name": "mock_multi_tool",
+      "mode": "mock",
+      "description": "Three read_file calls in one turn \u2014 sequential tool execution baseline",
+      "error": null,
+      "runs": [
+        {
+          "ttft_ms": 0.026791999999997707,
+          "total_ms": 0.26570900000000286,
+          "tool_exec_ms": 0.21137599999987433,
+          "input_tokens": 240,
+          "output_tokens": 80,
+          "message_count": 4,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.02233399999995722,
+          "total_ms": 0.24620899999994172,
+          "tool_exec_ms": 0.19637600000010913,
+          "input_tokens": 240,
+          "output_tokens": 80,
+          "message_count": 4,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.02091700000006469,
+          "total_ms": 0.2404170000001038,
+          "tool_exec_ms": 0.19279199999988617,
+          "input_tokens": 240,
+          "output_tokens": 80,
+          "message_count": 4,
+          "cache_read_tokens": 0
+        }
+      ],
+      "summary": {
+        "ttft_ms_median": 0.02233399999995722,
+        "total_ms_median": 0.24620899999994172,
+        "tool_exec_ms_median": 0.19637600000010913,
+        "input_tokens_median": 240,
+        "output_tokens_median": 80,
+        "n_runs": 3
+      }
+    },
+    {
+      "name": "mock_growing_history",
+      "mode": "mock",
+      "description": "10-turn conversation \u2014 measures latency change as history grows",
+      "error": null,
+      "runs": [
+        {
+          "ttft_ms": 0.017542000000037028,
+          "total_ms": 0.018375000000014907,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 2,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.01270800000008343,
+          "total_ms": 0.013166000000008893,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 4,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.012083999999967787,
+          "total_ms": 0.0124169999999868,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 6,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.012125000000029473,
+          "total_ms": 0.012458000000048486,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 8,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.013499999999999623,
+          "total_ms": 0.014041999999991894,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 10,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.014957999999953842,
+          "total_ms": 0.015291999999944572,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 12,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.015917000000031933,
+          "total_ms": 0.016334000000006732,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 14,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.019749999999985057,
+          "total_ms": 0.02008300000000407,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 16,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.02220899999993975,
+          "total_ms": 0.022583999999992166,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 18,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.02050000000008989,
+          "total_ms": 0.02083299999999788,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 20,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.017415999999936815,
+          "total_ms": 0.018124999999979963,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 2,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.012583999999926654,
+          "total_ms": 0.01295899999997907,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 4,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.011917000000027933,
+          "total_ms": 0.012249999999935923,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 6,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.012667000000021744,
+          "total_ms": 0.013041999999963139,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 8,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.013499999999999623,
+          "total_ms": 0.013874999999941018,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 10,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.014665999999996515,
+          "total_ms": 0.01504099999993791,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 12,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.01566699999999699,
+          "total_ms": 0.016041999999938383,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 14,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.01716699999998461,
+          "total_ms": 0.017584000000070432,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 16,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.018750000000067324,
+          "total_ms": 0.01912500000000872,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 18,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.019957999999986598,
+          "total_ms": 0.020332999999927992,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 20,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.016125000000033474,
+          "total_ms": 0.01670799999997641,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 2,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.012250000000046946,
+          "total_ms": 0.01262499999998834,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 4,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.011916000000056215,
+          "total_ms": 0.01229099999999761,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 6,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.01295899999997907,
+          "total_ms": 0.013291999999998083,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 8,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.013749999999923546,
+          "total_ms": 0.014124999999975962,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 10,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.014625000000045851,
+          "total_ms": 0.014999999999987246,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 12,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.01579200000001446,
+          "total_ms": 0.016166999999955856,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 14,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.017083000000028825,
+          "total_ms": 0.01745799999997022,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 16,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.018166999999902345,
+          "total_ms": 0.018499999999921357,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 18,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.01945800000002773,
+          "total_ms": 0.01979200000001846,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 20,
+          "cache_read_tokens": 0
+        }
+      ],
+      "summary": {
+        "ttft_ms_median": 0.015312499999975415,
+        "total_ms_median": 0.015666999999941478,
+        "tool_exec_ms_median": 0.0,
+        "input_tokens_median": 0.0,
+        "output_tokens_median": 0.0,
+        "n_runs": 30
+      }
+    },
+    {
+      "name": "mock_middleware_overhead",
+      "mode": "mock",
+      "description": "Time spent in middleware pre_process + post_process per turn",
+      "error": null,
+      "runs": [
+        {
+          "ttft_ms": 0.7064999999999433,
+          "total_ms": 0.7064999999999433,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.1162909999999906,
+          "total_ms": 0.1162909999999906,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.11379200000005696,
+          "total_ms": 0.11379200000005696,
+          "tool_exec_ms": 0.0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        }
+      ],
+      "summary": {
+        "ttft_ms_median": 0.1162909999999906,
+        "total_ms_median": 0.1162909999999906,
+        "tool_exec_ms_median": 0.0,
+        "input_tokens_median": 0,
+        "output_tokens_median": 0,
+        "n_runs": 3
+      }
+    },
+    {
+      "name": "mock_token_estimation",
+      "mode": "mock",
+      "description": "Token estimator speed + accuracy vs character count reference",
+      "error": null,
+      "runs": [
+        {
+          "ttft_ms": 0.0010000000000287557,
+          "total_ms": 0.0,
+          "tool_exec_ms": 100.0,
+          "input_tokens": 25,
+          "output_tokens": 25,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.0006670000000097431,
+          "total_ms": 0.0,
+          "tool_exec_ms": 500.0,
+          "input_tokens": 125,
+          "output_tokens": 125,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.000500000000069889,
+          "total_ms": 0.0,
+          "tool_exec_ms": 2000.0,
+          "input_tokens": 500,
+          "output_tokens": 500,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.0004580000000364848,
+          "total_ms": 0.0,
+          "tool_exec_ms": 10000.0,
+          "input_tokens": 2500,
+          "output_tokens": 2500,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.0004999999999588667,
+          "total_ms": 0.0,
+          "tool_exec_ms": 50000.0,
+          "input_tokens": 12500,
+          "output_tokens": 12500,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.00045900000000820285,
+          "total_ms": 0.0,
+          "tool_exec_ms": 100.0,
+          "input_tokens": 25,
+          "output_tokens": 25,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.000500000000069889,
+          "total_ms": 0.0,
+          "tool_exec_ms": 500.0,
+          "input_tokens": 125,
+          "output_tokens": 125,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.0004580000000364848,
+          "total_ms": 0.0,
+          "tool_exec_ms": 2000.0,
+          "input_tokens": 500,
+          "output_tokens": 500,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.00041699999997479864,
+          "total_ms": 0.0,
+          "tool_exec_ms": 10000.0,
+          "input_tokens": 2500,
+          "output_tokens": 2500,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.0004579999999254625,
+          "total_ms": 0.0,
+          "tool_exec_ms": 50000.0,
+          "input_tokens": 12500,
+          "output_tokens": 12500,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.00041700000008582094,
+          "total_ms": 0.0,
+          "tool_exec_ms": 100.0,
+          "input_tokens": 25,
+          "output_tokens": 25,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.00045900000000820285,
+          "total_ms": 0.0,
+          "tool_exec_ms": 500.0,
+          "input_tokens": 125,
+          "output_tokens": 125,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.000583000000053957,
+          "total_ms": 0.0,
+          "tool_exec_ms": 2000.0,
+          "input_tokens": 500,
+          "output_tokens": 500,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.0004579999999254625,
+          "total_ms": 0.0,
+          "tool_exec_ms": 10000.0,
+          "input_tokens": 2500,
+          "output_tokens": 2500,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        },
+        {
+          "ttft_ms": 0.00045900000000820285,
+          "total_ms": 0.0,
+          "tool_exec_ms": 50000.0,
+          "input_tokens": 12500,
+          "output_tokens": 12500,
+          "message_count": 1,
+          "cache_read_tokens": 0
+        }
+      ],
+      "summary": {
+        "ttft_ms_median": 0.00045900000000820285,
+        "total_ms_median": 0.0,
+        "tool_exec_ms_median": 2000.0,
+        "input_tokens_median": 500,
+        "output_tokens_median": 500,
+        "n_runs": 15
+      }
+    }
+  ]
+}
