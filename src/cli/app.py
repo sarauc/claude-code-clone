@@ -286,7 +286,7 @@ class YACCCLI:
                 
                 # Handle special commands
                 if user_input.lower() in ["exit", "quit", "q"]:
-                    self.renderer.print_status("Goodbye! 👋", "info")
+                    self._exit_with_memory_save()
                     break
                 
                 if user_input.lower() == "clear":
@@ -303,7 +303,11 @@ class YACCCLI:
                     todos = self.agent.get_todos()
                     self.renderer.print_todos(todos)
                     continue
-                
+
+                if user_input.lower() == "memory":
+                    self._show_memory()
+                    continue
+
                 if user_input.lower() == "help":
                     self._print_help()
                     continue
@@ -319,22 +323,69 @@ class YACCCLI:
         
         return 0
     
+    def _exit_with_memory_save(self):
+        """
+        Save session memory then print goodbye.
+
+        Called when the user types exit/quit/q. We save first so the user
+        can see the 'Saving...' status before the process ends.
+        Only fires if the session had at least one meaningful exchange.
+        """
+        if self.agent and self.agent.has_conversation():
+            self.renderer.print_status("Saving session memory...", "info")
+            try:
+                summary = self.agent.save_session_memory()
+                if summary:
+                    self.renderer.print_status(
+                        "Memory saved to .claude/memory.md", "success"
+                    )
+            except Exception as e:
+                # Never block exit on a memory save failure.
+                self.renderer.print_status(
+                    f"Memory save skipped: {e}", "warning"
+                )
+        self.renderer.print_status("Goodbye!", "info")
+
+    def _show_memory(self):
+        """Display the current project memory file in a panel."""
+        memory = self.agent.get_memory() if self.agent else None
+        if memory:
+            self.renderer.console.print(Panel(
+                memory,
+                title=f"Project Memory — {self.workspace}/.claude/memory.md",
+                border_style="blue",
+                padding=(1, 2),
+            ))
+        else:
+            self.renderer.print_status(
+                "No memory file yet. One will be created when you exit.", "info"
+            )
+
     def run_once(self, message: str) -> int:
         """Run a single message and exit."""
         if not self.initialize_agent():
             return 1
-        
+
         success = self.process_message(message)
+
+        # Save memory even for single-shot runs if something meaningful happened.
+        if success and self.agent and self.agent.has_conversation():
+            try:
+                self.agent.save_session_memory()
+            except Exception:
+                pass  # Don't surface memory errors in non-interactive mode
+
         return 0 if success else 1
     
     def _print_help(self):
         """Print help information."""
         help_text = """
 [bold cyan]Commands:[/bold cyan]
-  [bold]exit, quit, q[/bold]  - Exit the CLI
+  [bold]exit, quit, q[/bold]  - Save memory and exit
   [bold]clear[/bold]          - Clear the screen
   [bold]reset[/bold]          - Reset conversation history
   [bold]todos[/bold]          - Show current todo list
+  [bold]memory[/bold]         - Show project memory (.claude/memory.md)
   [bold]help[/bold]           - Show this help message
 
 [bold cyan]Tips:[/bold cyan]
@@ -342,6 +393,7 @@ class YACCCLI:
   • The agent can read/write files, run commands
   • Use todos for complex multi-step tasks
   • Press Ctrl+C to interrupt long operations
+  • Session notes are auto-saved to .claude/memory.md on exit
 """
         self.renderer.console.print(Panel(
             help_text,

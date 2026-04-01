@@ -19,6 +19,7 @@ try:
     from .middleware.summarization import SummarizationMiddleware
     from .middleware.prompt_caching import AnthropicPromptCachingMiddleware
     from .middleware.patch_tool_calls import PatchToolCallsMiddleware
+    from .middleware.session_memory import SessionMemoryMiddleware
 except ImportError:
     from src.tools.definitions import get_tools_for_api, DEFAULT_TOOLS
     from src.tools.executor import ToolExecutor
@@ -27,6 +28,7 @@ except ImportError:
     from src.middleware.summarization import SummarizationMiddleware
     from src.middleware.prompt_caching import AnthropicPromptCachingMiddleware
     from src.middleware.patch_tool_calls import PatchToolCallsMiddleware
+    from src.middleware.session_memory import SessionMemoryMiddleware
 
 
 @dataclass 
@@ -52,6 +54,11 @@ class AgentConfig:
     # each token as it arrives, so the CLI can render output in real time.
     # When False, the full response is waited for before any output (original behaviour).
     enable_streaming: bool = True
+
+    # Session memory
+    # When True, {workspace}/.claude/memory.md is injected into the system
+    # prompt at session start and a summary is saved at session end.
+    enable_session_memory: bool = True
 
     # Debug
     debug: bool = False
@@ -106,14 +113,24 @@ class Agent:
         self.tools = get_tools_for_api(tool_names)
         
         # Initialize middleware
+        # Order matters — pre_process runs forward, post_process runs in reverse.
+        # SessionMemory goes FIRST so its system_prompt injection is in place
+        # before PromptCaching adds cache_control markers to it.
         self.middleware = MiddlewareChain()
-        
+
+        self._session_memory: Optional[SessionMemoryMiddleware] = None
+        if self.config.enable_session_memory:
+            self._session_memory = SessionMemoryMiddleware(
+                workspace_path=self.config.workspace_path
+            )
+            self.middleware.add(self._session_memory)
+
         if self.config.enable_prompt_caching:
             self.middleware.add(AnthropicPromptCachingMiddleware())
-        
+
         if self.config.enable_summarization:
             self.middleware.add(SummarizationMiddleware())
-        
+
         self.middleware.add(PatchToolCallsMiddleware())
         
         # Conversation state
@@ -442,7 +459,42 @@ class Agent:
     def get_todos(self) -> List[Dict[str, Any]]:
         """Get current todo list."""
         return self.executor.todos
-    
+
+    def has_conversation(self) -> bool:
+        """Return True if at least one full user/assistant exchange has occurred."""
+        # state.messages always starts with the user message, so >= 2 means
+        # there has been at least one assistant response.
+        return len(self.state.messages) >= 2
+
+    def get_memory(self) -> Optional[str]:
+        """Return the raw contents of the project memory file, or None."""
+        if self._session_memory:
+            return self._session_memory.load_memory()
+        return None
+
+    def save_session_memory(self) -> Optional[str]:
+        """
+        Summarise this session and append the result to .claude/memory.md.
+
+        Called explicitly by the CLI at session end (not automatically after
+        every chat() call, to avoid saving trivial one-off queries).
+
+        Returns the generated summary string, or None if session memory is
+        disabled or the conversation is too short to be worth saving.
+        """
+        if not self._session_memory:
+            return None
+
+        # Skip if nothing meaningful happened (e.g. user typed 'help' and quit).
+        if not self.has_conversation():
+            return None
+
+        return self._session_memory.save_session_summary(
+            client=self.client,
+            model=self.config.model,
+            messages=self.state.messages,
+        )
+
     def reset(self):
         """Reset conversation state."""
         self.state = AgentState(
@@ -451,4 +503,7 @@ class Agent:
         )
         self.executor.todos = []
         self.executor.files_read = set()
+        # Re-enable memory injection for the fresh session.
+        if self._session_memory:
+            self._session_memory._injected = False
 
